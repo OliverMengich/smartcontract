@@ -1,0 +1,45 @@
+pragma solidity ^0.4.17;
+
+contract Lottery
+{
+   address public manager;
+   address[] public players;
+
+   constructor() public{
+      manager = msg.sender;
+   }
+   function enter(address manager) public payable{
+      // person who calls the contract must pay 0.01 ether
+      require(msg.value > .01 ether); // for validation
+      players.push(msg.sender);
+   }
+   function random() private view returns(uint){
+      return uint(keccak256(block.difficulty,now,players));
+   }
+   function returnEntries(){
+      // only the manager can call return entries
+      require(msg.sender == manager);
+   }
+   modifier restricted(){ // this modifier allows only the manager can call the contract
+      // only the manager calls the contract else it throws and error
+      require(msg.sender == manager);
+      _;
+      
+   }
+   // only the manager can select the winner of the contract
+   function pickWinner() public restricted{
+      
+      // divides a generated random number with the number of players in the contract
+      // and distributes the ether to them
+      uint index = random() % players.length;
+      // finds the winner from the players array with the specified address
+      // and attempt to send some ether to the player
+      players[index].transfer(this.balance); 
+      // reset the players arrays
+      players = new address[](0);
+      
+   }
+   function getPlayers() public view returns(address[]){
+      return players;
+   }
+}
